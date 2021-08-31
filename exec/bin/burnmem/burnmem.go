@@ -102,9 +102,6 @@ func burnMemWithRam() {
 	var cache = make(map[int][]Block, 1)
 	var count = 1
 	cache[count] = make([]Block, 0)
-	if memRate <= 0 {
-		memRate = 100
-	}
 	for range tick {
 		_, expectMem, err := calculateMemSize(memPercent, memReserve)
 		if !rateFlag {
