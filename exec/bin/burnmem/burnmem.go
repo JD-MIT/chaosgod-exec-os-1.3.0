@@ -51,9 +51,9 @@ const (
 type Block [32 * 1024]int32
 
 var (
-	burnMemStart, burnMemStop, burnMemNohup, includeBufferCache, avoidBeingKilled bool
-	memPercent, memReserve, memRate                                               int
-	burnMemMode                                                                   string
+	burnMemStart, burnMemStop, burnMemNohup, includeBufferCache, avoidBeingKilled, rateFlag bool
+	memPercent, memReserve, memRate                                                         int
+	burnMemMode                                                                             string
 )
 
 func main() {
@@ -68,6 +68,11 @@ func main() {
 	flag.StringVar(&burnMemMode, "mode", "cache", "burn memory mode, cache or ram")
 	bin.ParseFlagAndInitLog()
 
+	if memRate <= 0 {
+		rateFlag = false
+	} else {
+		rateFlag = true
+	}
 	if burnMemStart {
 		startBurnMem()
 	} else if burnMemStop {
@@ -102,6 +107,16 @@ func burnMemWithRam() {
 	}
 	for range tick {
 		_, expectMem, err := calculateMemSize(memPercent, memReserve)
+		if !rateFlag {
+
+			if (expectMem / 4094) > 0 {
+				memRate = 4096
+			} else if expectMem >= 1024 {
+				memRate = 1024
+			} else {
+				memRate = 100
+			}
+		}
 		if err != nil {
 			stopBurnMemFunc()
 			bin.PrintErrAndExit(err.Error())
