@@ -290,7 +290,7 @@ func calculateMemSize(percent, reserve int) (int64, int64, error) {
 		}
 	} else {
 		total = int64(memoryStat.Usage.Limit)
-		available = total - int64(memoryStat.Usage.Usage)
+		available = total - int64(memoryStat.ActiveAnon+memoryStat.InactiveAnon)
 		if burnMemMode == "ram" && !includeBufferCache {
 			available = available + int64(memoryStat.Cache)
 		}
