@@ -64,7 +64,7 @@ func main() {
 	flag.BoolVar(&avoidBeingKilled, "avoid-being-killed", false, "prevent mem-burn process from being killed by oom-killer")
 	flag.IntVar(&memPercent, "mem-percent", 0, "percent of burn memory")
 	flag.IntVar(&memReserve, "reserve", 0, "reserve to burn memory, unit is M")
-	flag.IntVar(&memRate, "rate", 100, "burn memory rate, unit is M/S, only support for ram mode")
+	flag.IntVar(&memRate, "rate", 0, "burn memory rate, unit is M/S, only support for ram mode")
 	flag.StringVar(&burnMemMode, "mode", "cache", "burn memory mode, cache or ram")
 	bin.ParseFlagAndInitLog()
 
@@ -290,7 +290,7 @@ func calculateMemSize(percent, reserve int) (int64, int64, error) {
 		}
 	} else {
 		total = int64(memoryStat.Usage.Limit)
-		available = total - int64(memoryStat.Usage.Usage)
+		available = total - int64(memoryStat.ActiveAnon+memoryStat.InactiveAnon)
 		if burnMemMode == "ram" && !includeBufferCache {
 			available = available + int64(memoryStat.Cache)
 		}
