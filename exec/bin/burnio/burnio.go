@@ -20,6 +20,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
+	"os"
 	"path"
 	"strings"
 	"time"
@@ -170,24 +172,27 @@ func burnRead(directory, size string) {
 }
 
 func getArgs() (string, string, string) {
-  createArgs  := "if=/dev/zero of=%s bs=%dM count=%d oflag=dsync"
-  runningReadArgs := "if=%s of=/dev/null bs=%sM count=%d iflag=dsync,direct,fullblock"
-  runningWriteArgs:= "if=/dev/zero of=%s bs=%sM count=%d oflag=dsync"
+	createArgs := "if=/dev/zero of=%s bs=%dM count=%d oflag=dsync"
+	runningReadArgs := "if=%s of=/dev/null bs=%sM count=%d iflag=dsync,direct,fullblock"
+	runningWriteArgs := "if=/dev/zero of=%s bs=%sM count=%d oflag=dsync"
 
 	ctx := context.Background()
-	response := cl.Run(ctx, "cat", "/etc/os-release")
-	if !response.Success {
-		bin.PrintErrAndExit(response.Err)
-		return "", "", ""
+	if _, err := os.Stat("/etc/os-release"); err != nil {
+		log.Println("文件不存在!")
+	} else {
+		response := cl.Run(ctx, "cat", "/etc/os-release")
+		if !response.Success {
+			bin.PrintErrAndExit(response.Err)
+			return "", "", ""
+		}
+
+		if strings.Contains(strings.ToUpper(response.Result.(string)), "ID=ALPINE") {
+			//alpine linux
+			createArgs = "if=/dev/zero of=%s bs=%dM count=%d oflag=append"
+			runningReadArgs = "if=%s of=/dev/null bs=%sM count=%d iflag=fullblock oflag=append"
+			runningWriteArgs = "if=/dev/zero of=%s bs=%sM count=%d oflag=append"
+		}
 	}
 
-	if strings.Contains(strings.ToUpper(response.Result.(string)), "ID=ALPINE") {
-	  //alpine linux
-    createArgs       = "if=/dev/zero of=%s bs=%dM count=%d oflag=append"
-    runningReadArgs  = "if=%s of=/dev/null bs=%sM count=%d iflag=fullblock oflag=append"
-    runningWriteArgs = "if=/dev/zero of=%s bs=%sM count=%d oflag=append"
-	}
-
-  return createArgs, runningReadArgs, runningWriteArgs
+	return createArgs, runningReadArgs, runningWriteArgs
 }
-
